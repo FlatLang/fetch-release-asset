@@ -5,7 +5,7 @@ inputs:
   repo:
     description: 'The `org/repo` containing the release.'
     required: false
-    default: ''
+    default: 'FlatLang/Airship'
   version:
     description: 'The release version to fetch from in the form `tags/<tag_name>` or `<release_id>`.'
     required: false
@@ -16,7 +16,8 @@ inputs:
     default: false
   file:
     description: 'The name of the file to be downloaded.'
-    required: true
+    required: false
+    default: 'airship.js'
   target:
     description: 'Target file path.'
     required: false

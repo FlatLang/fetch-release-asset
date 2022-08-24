@@ -28,15 +28,22 @@ interface GetReleaseOptions {
   readonly owner: string;
   readonly repo: string;
   readonly version: string;
+  readonly includePrerelease: boolean;
 }
 
-const getRelease = (
+const getRelease = async (
   octokit: ReturnType<typeof github.getOctokit>,
-  { owner, repo, version }: GetReleaseOptions
+  { owner, repo, version, includePrerelease }: GetReleaseOptions
 ) => {
   const tagsMatch = version.match(/^tags\/(.*)$/);
   if (version === 'latest') {
-    return octokit.rest.repos.getLatestRelease({ owner, repo });
+    if (includePrerelease) {
+      const releases = await octokit.rest.repos.listReleases({ owner, repo });
+
+      return {data: releases.data[0]!};
+    } else {
+      return octokit.rest.repos.getLatestRelease({ owner, repo });
+    }
   } else if (tagsMatch !== null && tagsMatch[1]) {
     return octokit.rest.repos.getReleaseByTag({
       owner,
@@ -132,6 +139,7 @@ const main = async (): Promise<void> => {
   );
   const token = core.getInput('token', { required: false });
   const version = core.getInput('version', { required: false });
+  const includePrerelease = core.getBooleanInput('includePrerelease', { required: false });
   const inputTarget = core.getInput('target', { required: false });
   const file = core.getInput('file', { required: true });
   const usesRegex = core.getBooleanInput('regex', { required: false });
@@ -140,7 +148,7 @@ const main = async (): Promise<void> => {
     core.getInput('octokitBaseUrl', { required: false }) || undefined;
 
   const octokit = github.getOctokit(token, { baseUrl });
-  const release = await getRelease(octokit, { owner, repo, version });
+  const release = await getRelease(octokit, { owner, repo, version, includePrerelease });
 
   const assetFilterFn = usesRegex
     ? filterByRegex(file)

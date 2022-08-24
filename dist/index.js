@@ -12559,10 +12559,15 @@ var getRepo = (inputRepoString, context2) => {
     return { owner, repo };
   }
 };
-var getRelease = (octokit, { owner, repo, version }) => {
+var getRelease = async (octokit, { owner, repo, version, includePrerelease }) => {
   const tagsMatch = version.match(/^tags\/(.*)$/);
   if (version === "latest") {
-    return octokit.rest.repos.getLatestRelease({ owner, repo });
+    if (includePrerelease) {
+      const releases = await octokit.rest.repos.listReleases({ owner, repo });
+      return { data: releases.data[0] };
+    } else {
+      return octokit.rest.repos.getLatestRelease({ owner, repo });
+    }
   } else if (tagsMatch !== null && tagsMatch[1]) {
     return octokit.rest.repos.getReleaseByTag({
       owner,
@@ -12623,13 +12628,14 @@ var main = async () => {
   const { owner, repo } = getRepo(core.getInput("repo", { required: false }), github.context);
   const token = core.getInput("token", { required: false });
   const version = core.getInput("version", { required: false });
+  const includePrerelease = core.getBooleanInput("includePrerelease", { required: false });
   const inputTarget = core.getInput("target", { required: false });
   const file = core.getInput("file", { required: true });
   const usesRegex = core.getBooleanInput("regex", { required: false });
   const target = inputTarget === "" ? file : inputTarget;
   const baseUrl = core.getInput("octokitBaseUrl", { required: false }) || void 0;
   const octokit = github.getOctokit(token, { baseUrl });
-  const release = await getRelease(octokit, { owner, repo, version });
+  const release = await getRelease(octokit, { owner, repo, version, includePrerelease });
   const assetFilterFn = usesRegex ? filterByRegex(file) : filterByFileName(file);
   const assets = release.data.assets.filter(assetFilterFn);
   if (assets.length === 0)

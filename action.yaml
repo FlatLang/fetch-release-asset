@@ -10,6 +10,10 @@ inputs:
     description: 'The release version to fetch from in the form `tags/<tag_name>` or `<release_id>`.'
     required: false
     default: 'latest'
+  includePrerelease:
+    description: 'Whether to include prereleases when searching for latest release.'
+    required: false
+    default: false
   file:
     description: 'The name of the file to be downloaded.'
     required: true

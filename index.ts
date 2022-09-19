@@ -38,9 +38,11 @@ const getRelease = async (
   const tagsMatch = version.match(/^tags\/(.*)$/);
   if (version === 'latest') {
     if (includePrerelease) {
-      const releases = await octokit.rest.repos.listReleases({ owner, repo });
+      const releasesResponse = await octokit.rest.repos.listReleases({ owner, repo });
+      const releases = releasesResponse.data;
+      releases.sort((a: any, b: any) => b.created_at.localeCompare(a.created_at));
 
-      return {data: releases.data[0]!};
+      return {data: releases[0]!};
     } else {
       return octokit.rest.repos.getLatestRelease({ owner, repo });
     }
